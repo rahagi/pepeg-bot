@@ -1,2 +1,3 @@
 *.sh
 *_test.go
+*.json
