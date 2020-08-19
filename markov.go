@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"strings"
 	"time"
@@ -9,27 +10,38 @@ import (
 
 const maxMsgLen = 20
 
-var (
-	fullText    string
-	lookupTable = make(map[string][]string)
-)
-
 func train(words string) {
-	fullText += words
-	w := strings.Split(fullText, " ")
-	for i := 0; i < len(w)-1; i++ {
-		lookupTable[w[i]] = append(lookupTable[w[i]], w[i+1])
+	w := strings.Split(words, " ")
+	modelMap := make(map[string][]string)
+	err := readJSON("model.json", &modelMap)
+	if err != nil {
+		_ = writeJSON(&modelMap, "model.json")
 	}
-	lookupTable[w[len(w)-1]] = []string{}
+	for i := 0; i < len(w)-1; i++ {
+		modelMap[w[i]] = append(modelMap[w[i]], w[i+1])
+	}
+	modelMap[w[len(w)-1]] = []string{}
+	err = writeJSON(&modelMap, "model.json")
+	if err != nil {
+		log.Fatal("error writing model.json: ", err)
+	}
 }
 
 func generate() string {
 	rand.Seed(time.Now().UnixNano())
-	words := strings.Split(fullText, " ")
-	currentWord := words[rand.Intn(len(words))]
+	var currentWord string
+	modelMap := make(map[string][]string)
+	err := readJSON("model.json", &modelMap)
+	if err != nil {
+		log.Fatal("error reading model.json: ", err)
+	}
+	for k := range modelMap {
+		currentWord = k
+		break
+	}
 	result := currentWord
 	for i := 0; i < maxMsgLen; i++ {
-		possibilities := lookupTable[currentWord]
+		possibilities := modelMap[currentWord]
 		pLen := len(possibilities)
 		if pLen <= 0 {
 			continue
@@ -38,7 +50,5 @@ func generate() string {
 		currentWord = next
 		result += fmt.Sprintf(" %s ", next)
 	}
-	fullText = ""
-	lookupTable = make(map[string][]string)
 	return result
 }
