@@ -39,5 +39,6 @@ func generate() string {
 		result += fmt.Sprintf(" %s ", next)
 	}
 	fullText = ""
+	lookupTable = make(map[string][]string)
 	return result
 }
