@@ -87,6 +87,7 @@ func (bot *twitchBot) chat(m string) {
 
 func main() {
 	v := flag.Bool("v", false, "verbose chat (print chat to stdout)")
+	l := flag.Bool("l", false, "learning mode (only listen to chat)")
 	flag.Parse()
 	verbose = *v
 	var (
@@ -108,8 +109,10 @@ func main() {
 		msgCount++
 		if msgCount >= 150 {
 			train(trainData)
-			chatMsg := generate()
-			bot.chat(chatMsg)
+			if !*l {
+				chatMsg := generate()
+				bot.chat(chatMsg)
+			}
 			trainData = ""
 			msgCount = 0
 		}
